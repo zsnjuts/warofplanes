@@ -14,52 +14,56 @@
 #include "EnemyPlane.h"
 using namespace std;
 
-/* changePosition函数的返回值：未执行，正常，发生碰撞未耗尽生命值，碰撞且耗尽生命值 */
-enum ChangePosFlag { NOCHANGE, CHANGED, CRASH };
-
-class Control
+class Control: public QGraphicsScene
 {
-	
+    Q_OBJECT
 public:
 	Control();
-	Control(int boardWidth, int boardHeight, int boardEntension, int enemyNumber,
-		int myLife, int myBulletPower, int myBulletSpeed, 
-		int enemyLife, int enemyBulletSpeed, int enemyBulletPower);
+    Control(int boardWidth, int boardHeight, int enemyNumber,
+        const string &myPlaneImageFile, int myLife,
+                     const string &myBulletImageFile, int myBulletPower, int myBulletSpeed,
+        const string &enemyPlaneImageFile, int enemyLife,
+                     const string &enemyBulletImageFile, int enemyBulletSpeed, int enemyBulletPower);
+
+protected:
+    void timerEvent(QTimerEvent *event);
+    void keyPressEvent(QKeyEvent *event);
 
 private:
-	int boardWidth;
-	int boardHeight;
-	int screenWidth;
-	int screenHeight;
+    string myPlaneImageFile;
 	int myLife;
+
+    string myBulletImageFile;
+    int myBulletImageScaleHeight;
 	int myBulletPower;
 	int myBulletSpeed;
+
+    string enemyPlaneImageFile;
 	int enemyLife;
+
+    string enemyBulletImageFile;
+    int enemyBulletImageScaleHeight;
 	int enemyBulletSpeed;
 	int enemyBulletPower;
-	char **screen;
-	MyPlane myplane;
+
+    int myBulletShootTimerId;
+    int enemyBulletShootTimerId;
+    int allBulletMoveTimerId;
+    int enemyPlaneMoveTimerId;
+
+    MyPlane *myplane;
 	vector<EnemyPlane *> enemyplanes;
 
-	void refreshScreen(); //刷新屏幕
 	bool generateEnemyPlane(); //生成一架敌机
 	
-	int judgeCrash(int aX, int aY, int aHeight, int aWidth, char *aShape,
-		int bX, int bY, int bHeight, int bWidth, char *bShape); //判断两飞机是否相撞，返回相撞点的个数
 	bool changePlanePosition(Plane *plane, int newX, int newY);
 	bool updateEnemyPlanes(); //根据敌机方向更新敌机位置
 	
-	/* 判断子弹是否击中飞机 */
-	bool judgeHit(Bullet * bullet, int bulletNewX, int bulletNewY,
-		int planeX, int planeY, int planeHeight, int planeWidth, char *planeShape); 
 	bool changeBulletPosition(Bullet *bullet, int newX, int newY); //改变子弹位置，返回子弹是否还在战场
-	bool updateBullets(); //更新所有子弹位置
 	void shootEnemyBullets(); //所有敌机发射子弹
 	void updateMyBullets(); //更新玩家所有子弹位置
 	void updateEnemyBullets(); //更新敌机所有子弹位置
 	void shootBullet(); //玩家飞机发射子弹
-	bool keyboardHandle(char cmd);
-	void run();
 	
 };
 

@@ -8,11 +8,7 @@ class MyPlane:protected Plane
 	friend class Control;
 public:
 	MyPlane();
-	MyPlane(int x, int y);
-	MyPlane(int x, int y, int width, int height, const char *shape);
-	MyPlane(int x, int y, int width, int height, const char *shape, int life);
-
-private:
+    MyPlane(int x, int y, const string &imageFile, QGraphicsScene *scene, int life);
 	
 };
 

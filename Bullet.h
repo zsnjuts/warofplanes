@@ -1,29 +1,30 @@
 #ifndef BULLET_H
 #define BULLET_H
 
+#include <QtWidgets>
+
 #include <utility>
 #include <fstream>
 #include <iostream>
 using namespace std;
 
+enum WarPart { ME, ENEMY };
 enum BulletState { READY, RUNNING }; //子弹状态：准备发射or已经发射
 enum BulletDirection { UP, UPLEFT, UPRIGHT, DOWN, DOWNLEFT, DOWNRIGHT }; //子弹方向
 
-class Bullet
+class Bullet: public QGraphicsPixmapItem
 {
 	friend class Control;
 public:
 	Bullet();
-	Bullet(int x, int y);
-	Bullet(int x, int y, BulletDirection dir, int power, int speed);
-	void delScreen(char **screen);
-	void synScreen(char **screen);
-	pair<int, int> updatePosition();
-	bool hit(char **screen);
+    Bullet(WarPart part, int x, int y, const string &imageFile, BulletDirection dir, int power, int speed);
+    void synScreen(QGraphicsScene *scene);
+    void delScreen(QGraphicsScene *scene);
+    pair<qreal, qreal> updatePosition();
+    bool hit(QGraphicsScene *scene);
 
 private: //TODO：对于子弹来说，(x,y)应为子弹的
-	int x;
-	int y;
+    WarPart part;
 	BulletDirection dir;
 	int power; //子弹杀伤力
 	BulletState state;

@@ -6,60 +6,65 @@ Bullet::Bullet()
 {
 }
 
-Bullet::Bullet(int x, int y)
+Bullet::Bullet(WarPart part, int x, int y, const string &imageFile, BulletDirection dir, int power, int speed):
+    QGraphicsPixmapItem(QPixmap(QString::fromStdString(imageFile)))
 {
-	this->x = x;
-	this->y = y;
-}
-
-Bullet::Bullet(int x, int y, BulletDirection dir, int power, int speed): Bullet(x,y)
-{
+    //刚生成子弹的时候不需要出现在屏幕上，因为子弹在炮管中
+    this->part = part;
+    setPos(x, y);
 	this->dir = dir;
 	this->power = power;
 	this->state = READY;
 	this->speed = speed;
 }
 
-void Bullet::delScreen(char ** screen)
+void Bullet::delScreen(QGraphicsScene *scene)
 {
-	screen[1 + x][1 + y] = ' ';
+    //qDebug() << "del bullet begin" << part;
+    scene->removeItem(this);
+    update();
+    //qDebug() << "del bullet end" << part;
 }
 
-void Bullet::synScreen(char ** screen)
+void Bullet::synScreen(QGraphicsScene *scene)
 {
-	screen[1 + x][1 + y] = '.';
+    if(!scene->items().contains(this))
+    {
+        scene->addItem(this);
+        update();
+    }
 }
 
-pair<int, int> Bullet::updatePosition()
+pair<qreal, qreal> Bullet::updatePosition()
 {
-	int newX = x;
-	int newY = y;
-	switch (dir)
+/*    qreal newX = x();
+    qreal newY = y();
+    switch (dir)
 	{
-	case UP: newX = x - speed; break;
-	case UPLEFT: newX = x - speed; newY = y - speed; break;
+    case UP: newX -= speed; break;
+    case UPLEFT: newX -= speed; newY -= speed; break;
 	case UPRIGHT: newX = x - speed; newY = y + speed; break;
 	case DOWN: newX = x + speed; break;
 	case DOWNLEFT: newX = x + speed; newY = y - speed; break;
 	case DOWNRIGHT: newX = x + speed; newY = y + speed; break;
 	default: break;
-	}
-
-	return make_pair(newX, newY);
+    }
+    return make_pair(newX, newY+5);*/
+    if(part==ME)
+        return make_pair(x(), y()-1);
+    else
+        return make_pair(x(), y()+1);
 }
 
-bool Bullet::hit(char **screen)
+bool Bullet::hit(QGraphicsScene *scene)
 {
-/*	ofstream fout("log.txt", ios::app);
-	fout << "hit @(" << x << "," << y << ")" << endl;
-	fout.close();*/
 	if (power <= 0)
 		return false;
 	else if (--power <= 0) //杀伤力在此次hit之后耗尽
 	{
-		delScreen(screen);
+        delScreen(scene);
 		return false;
 	}
 	else
-		return true;
+        return true;
 }
