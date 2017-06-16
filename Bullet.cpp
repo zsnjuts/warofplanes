@@ -51,7 +51,7 @@ pair<qreal, qreal> Bullet::updatePosition()
     }
     return make_pair(newX, newY+5);*/
     if(part==ME)
-        return make_pair(x(), y()-1);
+        return make_pair(x(), y()-3);
     else
         return make_pair(x(), y()+1);
 }

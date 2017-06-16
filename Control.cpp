@@ -27,7 +27,7 @@ Control::Control(int boardWidth, int boardHeight, int enemyNumber,
 	this->enemyBulletSpeed = enemyBulletSpeed;
 
     /* 设置各动作更新时钟 */
-    myBulletShootTimerId = startTimer(500); //300
+    myBulletShootTimerId = startTimer(300);
     enemyBulletShootTimerId = startTimer(1000);
     allBulletMoveTimerId = startTimer(10);
     enemyPlaneMoveTimerId = startTimer(1000);
@@ -77,14 +77,14 @@ bool Control::generateEnemyPlane()
 {
 	/* 随机在第一行生成敌机 */
     int x = rand() % (int)width(); //敌机最左端位置
-    while(!items(QPointF(x,0), Qt::IntersectsItemBoundingRect).empty()) //设置相交模式
+    while(!items(QPointF(x,0), Qt::ContainsItemBoundingRect).empty()) //设置相交模式
     {
         srand(time(NULL));//初始化时间种子
         x = rand() % (int)width();
     }
 
     /* 新增敌机 */
-    qDebug() << "gen: " << x;
+    //qDebug() << "gen: " << x;
     EnemyPlane *enemy = new EnemyPlane(x, 0, enemyPlaneImageFile, this, enemyLife);
     enemyplanes.push_back(enemy);
     return true;
@@ -157,11 +157,6 @@ bool Control::changePlanePosition(Plane *plane, int newX, int newY)
 	{
         plane->moveBy(newX-plane->x(), newY-plane->y());
         plane->update();
-
-		/* 此飞机炮管中的子弹位置随飞机更新 */
-		for(vector<Bullet*>::iterator it=plane->bullets.begin();it!=plane->bullets.end();it++)
-			if ((*it)->state == READY)
-                (*it)->moveBy(newX-plane->x(), newY-plane->y());
 	}
 
 	return plane->life > 0;
@@ -170,19 +165,19 @@ bool Control::changePlanePosition(Plane *plane, int newX, int newY)
 bool Control::updateEnemyPlanes()
 {
 	/* 若当前敌机少于3，则自动生成敌机，数目随机但小于8 */
-/*	if (enemyplanes.size() < 3)
+    if (enemyplanes.size() < 3)
 	{
 		int genNum = rand() % 8;
 		for (int i = 0; i < genNum; i++)
 			generateEnemyPlane();
-    }*/
+    }
 
 	shootEnemyBullets(); //所有敌机发射子弹
 
 	/* 所有敌机移动位置 */
 	for (vector<EnemyPlane*>::iterator it = enemyplanes.begin(); it != enemyplanes.end(); )
 	{
-        qDebug() << it-enemyplanes.begin() << "  (" << (*it)->x() << "," << (*it)->y() << ")";
+        //qDebug() << it-enemyplanes.begin() << "  (" << (*it)->x() << "," << (*it)->y() << ")";
 		pair<int, int> loc = (*it)->updatePosition();
 		if (changePlanePosition(*it, loc.first, loc.second))
 			it++;
@@ -203,22 +198,25 @@ bool Control::changeBulletPosition(Bullet * bullet, int newX, int newY)
 	/* 首先检查玩家飞机 */
     if (bullet->part==ENEMY && bullet->collidesWithItem(myplane))
 	{
-        qDebug() << "bullet hit player begin " << bullet->part;
+        qDebug() << "myplane: " << myplane->life;
         bullet->hit(this);
         myplane->crash(this);
-        qDebug() << "bullet hit player end " << bullet->part;
 	}
     else if(bullet->part==ME)
     {
-        /* 然后检查敌机：即使敌机已经没有生命值，也不从enemyplanes中删去，因为此飞机可能还有子弹在运动 */
-        for (vector<EnemyPlane*>::iterator it = enemyplanes.begin(); it != enemyplanes.end(); it++)
+        /* 然后检查敌机：若敌机已经没有生命值，就从enemyplanes中删去 */
+        for (vector<EnemyPlane*>::iterator it = enemyplanes.begin(); it != enemyplanes.end(); )
+        {
             if (bullet->collidesWithItem(*it))
             {
-                qDebug() << "collid del bullet begin" << bullet->part;
                 bullet->hit(this);
                 (*it)->crash(this);
-                qDebug() << "collid del bullet end" << bullet->part;
+                delete *it;
+                it = enemyplanes.erase(it);
             }
+            else
+                it++;
+        }
     }
 
 	/* 若子弹还具有杀伤力则更新位置并同步屏幕 */
@@ -227,9 +225,7 @@ bool Control::changeBulletPosition(Bullet * bullet, int newX, int newY)
 		/* 若此时子弹试图打出边界，则销毁子弹 */
         if (newX <= 0 || newX >= width() || newY <= 0 || newY >= height())
 		{
-            qDebug() << "illegal del bullet begin" << bullet->part;
             bullet->delScreen(this);
-            qDebug() << "illegal del bullet end" << bullet->part;
             return false;
 		}
 		if (bullet->state == READY) //若子弹还在炮管中，则更新状态，不删除原先位置
@@ -244,44 +240,36 @@ bool Control::changeBulletPosition(Bullet * bullet, int newX, int newY)
 
 void Control::updateEnemyBullets()
 {
-	for (vector<EnemyPlane*>::iterator iter = enemyplanes.begin(); iter != enemyplanes.end(); )
-	{
-		for (vector<Bullet*>::iterator it = (*iter)->bullets.begin(); it != (*iter)->bullets.end(); )
-		{
-			pair<int, int> loc = (*it)->updatePosition();
-			if (changeBulletPosition(*it, loc.first, loc.second)) //若子弹已毁，则销毁并移除
-				it++;
-			else
-			{
-				delete *it;
-				it = (*iter)->bullets.erase(it);
-			}
-		}
-
-		if ((*iter)->life <= 0 && (*iter)->bullets.empty()) //若敌机已毁且没有子弹，则删去此敌机
-		{
-			delete *iter;
-			iter = enemyplanes.erase(iter);
-		}
-		else
-			iter++;
-	}
+    for(vector<Bullet*>::iterator it = enemybullets.begin(); it!=enemybullets.end(); )
+    {
+        pair<int ,int> loc = (*it)->updatePosition();
+        if(changeBulletPosition(*it, loc.first, loc.second))
+            it++;
+        else
+        {
+            delete *it;
+            it = enemybullets.erase(it);
+        }
+    }
 }
 
 void Control::shootEnemyBullets()
 {
-	/* 仍存活的敌机发出新子弹，新子弹在敌机炮管尖端的位置 */
-	for (vector<EnemyPlane*>::iterator iter = enemyplanes.begin(); iter != enemyplanes.end(); iter++)
+    /* 仍存活的敌机发出新子弹，新子弹在敌机炮管外的位置 */
+    for (vector<EnemyPlane*>::iterator iter = enemyplanes.begin(); iter != enemyplanes.end(); iter++)
 		if ((*iter)->life > 0)
-			(*iter)->bullets.push_back(
-                new Bullet(ENEMY, (*iter)->x()+(*iter)->pixmap().width()/2, (*iter)->y()+(*iter)->pixmap().height()-1,
-                           enemyBulletImageFile, DOWN, enemyBulletPower, enemyBulletSpeed));
-	updateEnemyBullets();
+        {
+            Bullet *bullet = new Bullet(ENEMY, (*iter)->x()+(*iter)->pixmap().width()/2, (*iter)->y()+(*iter)->pixmap().height()-15,
+                                        enemyBulletImageFile, DOWN, enemyBulletPower, enemyBulletSpeed);
+            enemybullets.push_back(bullet);
+            addItem(bullet);
+        }
+    //updateEnemyBullets();
 }
 
 void Control::updateMyBullets()
 {
-    for (vector<Bullet*>::iterator it = myplane->bullets.begin(); it != myplane->bullets.end(); )
+    for (vector<Bullet*>::iterator it = mybullets.begin(); it != mybullets.end(); )
 	{
 		pair<int, int> loc = (*it)->updatePosition();
 		if (changeBulletPosition(*it, loc.first, loc.second))
@@ -289,7 +277,7 @@ void Control::updateMyBullets()
 		else
 		{
 			delete *it;
-            it = myplane->bullets.erase(it);
+            it = mybullets.erase(it);
 		}
 	}
 }
@@ -297,10 +285,12 @@ void Control::updateMyBullets()
 //标记：这里还需要添加玩家子弹自动发射的逻辑
 void Control::shootBullet()
 {
-	/* 玩家飞机发出新子弹，新子弹在玩家飞机炮管尖端的位置 */
-    myplane->bullets.push_back(new Bullet(ME, myplane->x()+40, myplane->y() + 2,
-                                          myBulletImageFile, UP, myBulletPower, myBulletSpeed));
+    /* 玩家飞机发出新子弹，新子弹在玩家飞机炮管外的位置 */
+    Bullet *bullet = new Bullet(ME, myplane->x()+40, myplane->y()-38,
+                                myBulletImageFile, UP, myBulletPower, myBulletSpeed);
+    mybullets.push_back(bullet);
+    addItem(bullet);
 
 	/* 更新玩家飞机子弹位置 */
-	updateMyBullets();
+    //updateMyBullets();
 }

@@ -52,7 +52,9 @@ private:
     int enemyPlaneMoveTimerId;
 
     MyPlane *myplane;
-	vector<EnemyPlane *> enemyplanes;
+    vector<Bullet*> mybullets;
+    vector<EnemyPlane *> enemyplanes;
+    vector<Bullet*> enemybullets;
 
 	bool generateEnemyPlane(); //生成一架敌机
 	

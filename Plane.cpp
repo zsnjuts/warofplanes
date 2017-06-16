@@ -18,14 +18,12 @@ Plane::Plane(int x, int y, const string &imageFile, QGraphicsScene *scene, int l
     update();
 }
 
-
-
 void Plane::delScreen(QGraphicsScene *scene)
 {
-    qDebug() << "del plane begin";
+    //qDebug() << "del plane begin";
     scene->removeItem(this);
     update();
-    qDebug() << "del plane end";
+    //qDebug() << "del plane end";
 }
 
 void Plane::synScreen(QGraphicsScene *scene)

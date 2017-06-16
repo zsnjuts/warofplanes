@@ -20,7 +20,7 @@ public:
 protected:
 	int life; //生命值
     enum WarPart part;
-	vector<Bullet*> bullets; //子弹
+    //vector<Bullet*> bullets; //子弹
 };
 
 #endif // !PLANE_H
