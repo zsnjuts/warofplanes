@@ -23,5 +23,5 @@ pair<int,int> EnemyPlane::updatePosition()
 	default: break;
     }*/
 
-    return make_pair(x(), y()+5);
+    return make_pair(x(), y()+2);
 }

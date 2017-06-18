@@ -1,5 +1,14 @@
 #include "Control.h"
 
+const QPointF LifeBarPos = QPointF(650,550);
+const QPointF SkillBarPos = QPointF(650, 570);
+
+const int myBulletShootTimerItv = 300;
+const int enemyBulletShootTimerItv = 1000;
+const int allBulletMoveTimerItv = 10;
+const int enemyPlaneMoveTimerItv = 50;
+const int enemyPlaneGenerateTimerItv = 3000;
+
 Control::Control()
 {
 }
@@ -22,18 +31,40 @@ Control::Control(int boardWidth, int boardHeight, int enemyNumber,
 	this->enemyLife = enemyLife;
 
     this->enemyBulletImageFile = enemyBulletImageFile;
-    this->enemyBulletImageScaleHeight = enemyBulletImageScaleHeight;
 	this->enemyBulletPower = enemyBulletPower;
 	this->enemyBulletSpeed = enemyBulletSpeed;
 
-    /* 设置各动作更新时钟 */
-    myBulletShootTimerId = startTimer(300);
-    enemyBulletShootTimerId = startTimer(1000);
-    allBulletMoveTimerId = startTimer(10);
-    enemyPlaneMoveTimerId = startTimer(1000);
+    /* 生命值 */
+    lifeFrameBar = new QGraphicsRectItem(LifeBarPos.x(), LifeBarPos.y(),100,5);
+    lifeFrameBar->setPen(QPen(Qt::white));
+    addItem(lifeFrameBar);
+    lifeBar = new QGraphicsRectItem(LifeBarPos.x(), LifeBarPos.y(), 100, 5);
+    lifeBar->setBrush(QBrush(Qt::green));
+    addItem(lifeBar);
 
-    /* 初始化场景 */
+    /* 技能值 */
+    skillFrameBar = new QGraphicsRectItem(SkillBarPos.x(),SkillBarPos.y(),100,5);
+    skillFrameBar->setPen(QPen(Qt::white));
+    addItem(skillFrameBar);
+    skillBar = new QGraphicsRectItem(SkillBarPos.x(), SkillBarPos.y(), 0, 5);
+    skillBar->setBrush(QBrush(Qt::blue));
+    addItem(skillBar);
+
+    /* 设置各动作更新时钟 */
+    myBulletShootTimerId = startTimer(myBulletShootTimerItv);
+    enemyBulletShootTimerId = startTimer(enemyBulletShootTimerItv);
+    allBulletMoveTimerId = startTimer(allBulletMoveTimerItv);
+    enemyPlaneMoveTimerId = startTimer(enemyPlaneMoveTimerItv);
+    enemyPlaneGenerateTimerId = startTimer(enemyPlaneGenerateTimerItv);
+
+    /* 初始化场景，播放背景音乐 */
     setSceneRect(0,0,boardWidth,boardHeight);
+    playList = new QMediaPlaylist;
+    playList->addMedia(QUrl::fromLocalFile("music/starwars.mp3"));
+    playList->setPlaybackMode(QMediaPlaylist::CurrentItemInLoop); //单曲循环
+    player = new QMediaPlayer(this);
+    player->setPlaylist(playList);
+    player->play();
 	
     /* 添加玩家飞机 */
     myplane = new MyPlane(boardWidth / 2, boardHeight / 2, myPlaneImageFile, this, myLife);
@@ -42,6 +73,26 @@ Control::Control(int boardWidth, int boardHeight, int enemyNumber,
 	/* 添加敌机 */
 	for (int i = 0; i < enemyNumber; i++)
 		generateEnemyPlane();
+
+    /* 遮罩面板 */
+    QWidget *mask = new QWidget;
+    mask->setAutoFillBackground(true);
+    mask->setPalette(QPalette(QColor(0, 0, 0, 80)));
+    mask->resize(width(),height());
+    maskWidget = addWidget(mask);
+    maskWidget->setPos(0,0);
+    maskWidget->setZValue(1); //设置处在z值为0的图形项上方
+    maskWidget->hide();
+
+    /* 游戏暂停提示 */
+    isPause = false;
+    gamePausedText = new QGraphicsTextItem;
+    addItem(gamePausedText);
+    gamePausedText->setHtml(tr("<font color=white>GAME PAUSED</font>"));
+    gamePausedText->setFont(QFont("Times", 30, QFont::Bold));
+    gamePausedText->setPos(250, 250);
+    gamePausedText->setZValue(2);
+    gamePausedText->hide();
 }
 
 void Control::timerEvent(QTimerEvent *event)
@@ -58,6 +109,11 @@ void Control::timerEvent(QTimerEvent *event)
     }
     else if(event->timerId()==enemyPlaneMoveTimerId)
         updateEnemyPlanes();
+    else if(event->timerId()==enemyPlaneGenerateTimerId)
+    {
+        for(int i=0;i<2;i++)
+            generateEnemyPlane();
+    }
 }
 
 void Control::keyPressEvent(QKeyEvent *event)
@@ -70,21 +126,29 @@ void Control::keyPressEvent(QKeyEvent *event)
         myplane->moveBy(-10, 0);
     else if(event->key()==Qt::Key_D)
         myplane->moveBy(10, 0);
+    else if(event->key()==Qt::Key_Q)
+    {
+        //按Q的技能可以消掉扫到的所有子弹，但是会消耗技能值
+    }
+    else if(event->key()==Qt::Key_E)
+    {
+        //按E的技能可以打掉所有飞机，消耗技能值
+    }
+    else if(event->key()==Qt::Key_Space)
+        pauseGame();
     myplane->update();
 }
 
 bool Control::generateEnemyPlane()
 {
 	/* 随机在第一行生成敌机 */
+    srand(time(NULL));//初始化时间种子，之前这个放在循环内会导致卡死
     int x = rand() % (int)width(); //敌机最左端位置
-    while(!items(QPointF(x,0), Qt::ContainsItemBoundingRect).empty()) //设置相交模式
-    {
-        srand(time(NULL));//初始化时间种子
+    QPixmap pixmap(QPixmap(QString::fromStdString(enemyPlaneImageFile)));
+    while(!items(x, 0, pixmap.width(), pixmap.height(), Qt::IntersectsItemBoundingRect, Qt::DescendingOrder).empty()) //设置相交模式
         x = rand() % (int)width();
-    }
 
     /* 新增敌机 */
-    //qDebug() << "gen: " << x;
     EnemyPlane *enemy = new EnemyPlane(x, 0, enemyPlaneImageFile, this, enemyLife);
     enemyplanes.push_back(enemy);
     return true;
@@ -164,15 +228,13 @@ bool Control::changePlanePosition(Plane *plane, int newX, int newY)
 
 bool Control::updateEnemyPlanes()
 {
-	/* 若当前敌机少于3，则自动生成敌机，数目随机但小于8 */
-    if (enemyplanes.size() < 3)
+    /* 若当前敌机少于1，则自动生成敌机，数目随机但小于5 */
+    if (enemyplanes.size() < 1)
 	{
-		int genNum = rand() % 8;
+        int genNum = rand() % 5;
 		for (int i = 0; i < genNum; i++)
 			generateEnemyPlane();
     }
-
-	shootEnemyBullets(); //所有敌机发射子弹
 
 	/* 所有敌机移动位置 */
 	for (vector<EnemyPlane*>::iterator it = enemyplanes.begin(); it != enemyplanes.end(); )
@@ -198,9 +260,12 @@ bool Control::changeBulletPosition(Bullet * bullet, int newX, int newY)
 	/* 首先检查玩家飞机 */
     if (bullet->part==ENEMY && bullet->collidesWithItem(myplane))
 	{
-        qDebug() << "myplane: " << myplane->life;
+        //qDebug() << "myplane: " << myplane->life;
         bullet->hit(this);
         myplane->crash(this);
+        lifeBar->setRect(LifeBarPos.x(), LifeBarPos.y(), lifeBar->rect().width()-2, lifeBar->rect().height());
+        lifeBar->setBrush(Qt::green);
+        lifeBar->update();
 	}
     else if(bullet->part==ME)
     {
@@ -213,6 +278,10 @@ bool Control::changeBulletPosition(Bullet * bullet, int newX, int newY)
                 (*it)->crash(this);
                 delete *it;
                 it = enemyplanes.erase(it);
+                skillBar->setRect(SkillBarPos.x(), SkillBarPos.y(),
+                                  min(skillBar->rect().width()+2, skillFrameBar->rect().width()), lifeBar->rect().height());
+                skillBar->setBrush(Qt::blue);
+                skillBar->update();
             }
             else
                 it++;
@@ -293,4 +362,30 @@ void Control::shootBullet()
 
 	/* 更新玩家飞机子弹位置 */
     //updateMyBullets();
+}
+
+void Control::pauseGame()
+{
+    if(!isPause)
+    {
+        isPause = true;
+        killTimer(myBulletShootTimerId);
+        killTimer(enemyBulletShootTimerId);
+        killTimer(allBulletMoveTimerId);
+        killTimer(enemyPlaneMoveTimerId);
+        killTimer(enemyPlaneGenerateTimerId);
+        maskWidget->show();
+        gamePausedText->show();
+    }
+    else
+    {
+        isPause = false;
+        myBulletShootTimerId = startTimer(myBulletShootTimerItv);
+        enemyBulletShootTimerId = startTimer(enemyBulletShootTimerItv);
+        allBulletMoveTimerId = startTimer(allBulletMoveTimerItv);
+        enemyPlaneMoveTimerId = startTimer(enemyPlaneMoveTimerItv);
+        enemyPlaneGenerateTimerId = startTimer(enemyPlaneGenerateTimerItv);
+        maskWidget->hide();
+        gamePausedText->hide();
+    }
 }

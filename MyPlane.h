@@ -9,6 +9,9 @@ class MyPlane:protected Plane
 public:
 	MyPlane();
     MyPlane(int x, int y, const string &imageFile, QGraphicsScene *scene, int life);
+
+private:
+    int skill; //¼¼ÄÜÖµ
 	
 };
 

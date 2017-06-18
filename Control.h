@@ -9,6 +9,11 @@
 #include <iostream>
 #include <algorithm>
 #include <windows.h>
+
+#include <QUrl>
+#include <QMediaPlayer>
+#include <QMediaPlaylist>
+
 #include "Plane.h"
 #include "MyPlane.h"
 #include "EnemyPlane.h"
@@ -50,11 +55,20 @@ private:
     int enemyBulletShootTimerId;
     int allBulletMoveTimerId;
     int enemyPlaneMoveTimerId;
+    int enemyPlaneGenerateTimerId;
 
     MyPlane *myplane;
     vector<Bullet*> mybullets;
     vector<EnemyPlane *> enemyplanes;
     vector<Bullet*> enemybullets;
+
+    QGraphicsRectItem *lifeFrameBar;
+    QGraphicsRectItem *lifeBar;
+    QGraphicsRectItem *skillFrameBar;
+    QGraphicsRectItem *skillBar;
+
+    QMediaPlayer *player;
+    QMediaPlaylist *playList;
 
 	bool generateEnemyPlane(); //生成一架敌机
 	
@@ -66,6 +80,11 @@ private:
 	void updateMyBullets(); //更新玩家所有子弹位置
 	void updateEnemyBullets(); //更新敌机所有子弹位置
 	void shootBullet(); //玩家飞机发射子弹
+
+    bool isPause; //游戏是否暂停
+    QGraphicsWidget *maskWidget; //遮罩面板
+    QGraphicsTextItem *gamePausedText; //游戏暂停显示文本
+    void pauseGame(); //暂停游戏
 	
 };
 
