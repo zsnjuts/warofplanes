@@ -24,11 +24,11 @@ class Control: public QGraphicsScene
     Q_OBJECT
 public:
 	Control();
-    Control(int boardWidth, int boardHeight, int enemyNumber,
-        const string &myPlaneImageFile, int myLife,
-                     const string &myBulletImageFile, int myBulletPower, int myBulletSpeed,
+    Control(int boardWidth, int boardHeight,
+        const string &myPlaneImageFile, int myLife, int mySkill,
+                     const string &myBulletImageFile, int myBulletPower,
         const string &enemyPlaneImageFile, int enemyLife,
-                     const string &enemyBulletImageFile, int enemyBulletSpeed, int enemyBulletPower);
+                     const string &enemyBulletImageFile, int enemyBulletPower);
 
 protected:
     void timerEvent(QTimerEvent *event);
@@ -37,6 +37,7 @@ protected:
 private:
     string myPlaneImageFile;
 	int myLife;
+    int mySkill;
 
     string myBulletImageFile;
     int myBulletImageScaleHeight;
@@ -81,10 +82,26 @@ private:
 	void updateEnemyBullets(); //更新敌机所有子弹位置
 	void shootBullet(); //玩家飞机发射子弹
 
+    void updateBar(QGraphicsRectItem *bar, QGraphicsRectItem *frameBar, const QPointF &pos, qreal var, const QBrush &brush); //更新血条或技能条
+
     bool isPause; //游戏是否暂停
     QGraphicsWidget *maskWidget; //遮罩面板
     QGraphicsTextItem *gamePausedText; //游戏暂停显示文本
     void pauseGame(); //暂停游戏
+
+    int myBulletType; //是否使用技能
+    int skillQTimerId; //技能Q使用时间
+    int score; //打掉的飞机数
+    QGraphicsTextItem *scoreText; //显示当前打掉的飞机数
+
+    QGraphicsTextItem *gameLostText; //玩家死亡显示文本
+    void loseGame(); //玩家生命值用尽
+
+    QGraphicsTextItem *gameHelpText; //游戏初始帮助
+    void welcomeGame(); //初始界面
+
+    bool hasStarted; //是否已经开始游戏
+    void startGame(); //开始游戏
 	
 };
 
