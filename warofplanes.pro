@@ -18,3 +18,5 @@ SOURCES += \
     Plane.cpp
 
 CONFIG += C++11
+
+RC_FILE = icon.rc

@@ -5,11 +5,12 @@ int main(int argc, char *argv[])
     QApplication app(argc, argv);
 
     /* Æô¶¯»­Ãæ */
-    QPixmap welcome("images/welcome.png");
+    QPixmap welcome("images/welcome_new.png");
     QSplashScreen splash(welcome);
     splash.resize(welcome.size());
     splash.show();
     app.processEvents();
+    Sleep(300);
 
     Control *ctrl = new Control(800,600,
                                 "images/myplane.png",50,5,"images/mybullet.png",1,
