@@ -11,7 +11,7 @@ public:
     MyPlane(int x, int y, const string &imageFile, QGraphicsScene *scene, int life, int skill);
 
 private:
-    int skill; //¼¼ÄÜÖµ
+    int skill; //æŠ€èƒ½å€¼
 	
 };
 

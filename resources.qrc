@@ -1,0 +1,16 @@
+<RCC>
+    <qresource prefix="/">
+        <file>images/pushbutton01.png</file>
+        <file>images/background.png</file>
+        <file>images/welcome_new.png</file>
+        <file>images/enemybullet.png</file>
+        <file>images/enemyplane.png</file>
+        <file>images/mybullet.png</file>
+        <file>images/myplane.png</file>
+        <file>music/starwars.mp3</file>
+        <file>images/pushbutton11.png</file>
+        <file>images/boss.png</file>
+        <file>images/bossbullet.png</file>
+        <file>images/lifesupply.png</file>
+    </qresource>
+</RCC>

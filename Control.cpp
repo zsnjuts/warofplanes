@@ -9,129 +9,170 @@ const int enemyBulletShootTimerItv = 1000;
 const int allBulletMoveTimerItv = 10;
 const int enemyPlaneMoveTimerItv = 50;
 const int enemyPlaneGenerateTimerItv = 3000;
+const int bossGenerateTimeItv = 5000;
 
 Control::Control()
 {
-}
+    setSceneRect(0,0,800,600);
 
-Control::Control(int boardWidth, int boardHeight,
-    const string &myPlaneImageFile, int myLife, int mySkill,
-                 const string &myBulletImageFile, int myBulletPower,
-    const string &enemyPlaneImageFile, int enemyLife,
-                 const string &enemyBulletImageFile, int enemyBulletPower)
-{
-    this->myPlaneImageFile = myPlaneImageFile;
-	this->myLife = myLife;
-    this->mySkill = mySkill;
+    this->myPlaneImageFile = ":/images/myplane.png";
+    this->myLife = 50;
+    this->mySkill = 5;
 
-    this->myBulletImageFile = myBulletImageFile;
-    this->myBulletImageScaleHeight = myBulletImageScaleHeight;
-	this->myBulletPower = myBulletPower;
+    this->myBulletImageFile = ":/images/mybullet.png";
+    this->myBulletPower = 1;
 
-    this->enemyPlaneImageFile = enemyPlaneImageFile;
-	this->enemyLife = enemyLife;
+    this->enemyPlaneImageFile = ":/images/enemyplane.png";
+    this->enemyLife = 1;
 
-    this->enemyBulletImageFile = enemyBulletImageFile;
-	this->enemyBulletPower = enemyBulletPower;
+    this->enemyBulletImageFile = ":/images/enemybullet.png";
+    this->enemyBulletPower = 1;
 
-    /* ÉúÃüÖµ */
+    this->bossImageFile = ":/images/boss.png";
+    this->bossLife = 10;
+
+    this->bossBulletImageFile = ":/images/bossbullet.png";
+    this->bossBulletPower = 2;
+
+    this->lifeSupplyImageFile = ":/images/lifesupply.png";
+
+    /* ç”Ÿå‘½å€¼ */
     lifeFrameBar = new QGraphicsRectItem(LifeBarPos.x(), LifeBarPos.y(), myLife*2,5);
     lifeFrameBar->setPen(QPen(Qt::white));
     addItem(lifeFrameBar);
+    lifeFrameBar->hide();
     lifeBar = new QGraphicsRectItem(LifeBarPos.x(), LifeBarPos.y(), myLife*2, 5);
     lifeBar->setBrush(QBrush(Qt::green));
     addItem(lifeBar);
+    lifeBar->hide();
 
-    /* ¼¼ÄÜÖµ */
+    /* æŠ€èƒ½å€¼ */
     skillFrameBar = new QGraphicsRectItem(SkillBarPos.x(),SkillBarPos.y(), myLife*2,5);
     skillFrameBar->setPen(QPen(Qt::white));
     addItem(skillFrameBar);
+    skillFrameBar->hide();
     skillBar = new QGraphicsRectItem(SkillBarPos.x(), SkillBarPos.y(), mySkill*2, 5);
     skillBar->setBrush(QBrush(Qt::blue));
     addItem(skillBar);
+    skillBar->hide();
 
-    /* ³õÊ¼»¯³¡¾°£¬²¥·Å±³¾°ÒôÀÖ */
-    setSceneRect(0,0,boardWidth,boardHeight);
+    /* åˆå§‹åŒ–åœºæ™¯ï¼Œæ’­æ”¾èƒŒæ™¯éŸ³ä¹ */
     playList = new QMediaPlaylist;
-    playList->addMedia(QUrl::fromLocalFile("music/starwars.mp3"));
-    playList->setPlaybackMode(QMediaPlaylist::CurrentItemInLoop); //µ¥ÇúÑ­»·
+    playList->addMedia(QUrl("qrc:///music/starwars.mp3"));
+    playList->setPlaybackMode(QMediaPlaylist::CurrentItemInLoop); //å•æ›²å¾ªç¯
     player = new QMediaPlayer(this);
     player->setPlaylist(playList);
     player->play();
 
-    /* ÕÚÕÖÃæ°å */
+    /* é®ç½©é¢æ¿ */
     QWidget *mask = new QWidget;
     mask->setAutoFillBackground(true);
     mask->setPalette(QPalette(QColor(0, 0, 0, 80)));
     mask->resize(width(),height());
     maskWidget = addWidget(mask);
     maskWidget->setPos(0,0);
-    maskWidget->setZValue(1); //ÉèÖÃ´¦ÔÚzÖµÎª0µÄÍ¼ĞÎÏîÉÏ·½
+    maskWidget->setZValue(1); //è®¾ç½®å¤„åœ¨zå€¼ä¸º0çš„å›¾å½¢é¡¹ä¸Šæ–¹
     maskWidget->hide();
 
-    /* ÓÎÏ·ÔİÍ£ÌáÊ¾ */
-    isPause = false;
-    gamePausedText = new QGraphicsTextItem;
-    addItem(gamePausedText);
-    gamePausedText->setHtml(tr("<font color=white>GAME PAUSED</font>"));
-    gamePausedText->setFont(QFont("Courier", 30, QFont::Bold));
-    gamePausedText->setPos(250, 250);
-    gamePausedText->setZValue(2);
-    gamePausedText->hide();
-
-    /* µÃ·ÖÌáÊ¾ */
-    myBulletType = 0; //×Óµ¯ÀàĞÍ³õÊ¼»¯
-    score = 0; //µÃ·ÖÇåÁã
+    /* å¾—åˆ†æç¤º */
+    myBulletType = 0; //å­å¼¹ç±»å‹åˆå§‹åŒ–
+    score = 0; //å¾—åˆ†æ¸…é›¶
     scoreText = new QGraphicsTextItem;
     scoreText->setPos(scoreTextPos);
     scoreText->setHtml(tr("<font color=white>SCORE: %1</font>").arg(score));
     scoreText->setFont(QFont("Courier"));
     addItem(scoreText);
+    scoreText->hide();
 
-    /* ÓÎÏ·ÖÕÖ¹ÌáÊ¾ */
+    /* æ¸¸æˆå¼€å§‹æŒ‰é’® */
+    QPushButton *startGameBtn = new QPushButton("Start Game");
+    startGameBtn->setFont(QFont("Algerian",18));
+    startGameBtn->setStyleSheet("QPushButton{background: transparent; color:white; }"
+                                "QPushButton:hover{color:red;}");
+    connect(startGameBtn,SIGNAL(clicked()),this,SLOT(startGame()));
+    startGameButton = addWidget(startGameBtn);
+    startGameButton->setPos(300,250);
+    startGameButton->setZValue(2);
+    startGameButton->hide();
+
+    /* æ¸¸æˆå¸®åŠ© */
+    QPushButton *helpGameBtn = new QPushButton(tr("Help"));
+    helpGameBtn->setFont(QFont("Algerian",18));
+    helpGameBtn->setStyleSheet("QPushButton{background: transparent; color:white; }"
+                                   "QPushButton:hover{color:red;}");
+    connect(helpGameBtn,SIGNAL(clicked()),this,SLOT(showHelpMessage()));
+    helpGameButton = addWidget(helpGameBtn);
+    helpGameButton->setPos(350,300);
+    helpGameButton->setZValue(2);
+    helpGameButton->hide();
+
+    /* é€€å‡ºæ¸¸æˆ */
+    QPushButton *quitGameBtn = new QPushButton(tr("Quit Game"));
+    quitGameBtn->setFont(QFont("Algerian",18));
+    quitGameBtn->setStyleSheet("QPushButton{background: transparent; color:white; }"
+                               "QPushButton:hover{color:red;}");
+    connect(quitGameBtn,SIGNAL(clicked()),this,SLOT(quitGame()));
+    quitGameButton = addWidget(quitGameBtn);
+    quitGameButton->setPos(310, 350);
+    quitGameButton->setZValue(2);
+    quitGameButton->hide();
+
+    /* æ¸¸æˆæš‚åœæç¤º */
+    isPause = false;
+    QPushButton *continueGameBtn = new QPushButton(tr("Resume"));
+    continueGameBtn->setFont(QFont("Algerian",18));
+    continueGameBtn->setStyleSheet("QPushButton{background: transparent; color:white; }"
+                                   "QPushButton:hover{color:red;}");
+    connect(continueGameBtn,SIGNAL(clicked()),this,SLOT(pauseGame()));
+    continueGameButton = addWidget(continueGameBtn);
+    continueGameButton->setPos(330,250);
+    continueGameButton->setZValue(2);
+    continueGameButton->hide();
+
+    /* æ¸¸æˆæ ‡é¢˜ */
+    titleText = new QGraphicsTextItem;
+    addItem(titleText);
+    titleText->setHtml(tr("<font color=white>WAR OF PLANES</font>"));
+    titleText->setFont(QFont("Algerian", 30));
+    titleText->setPos(200,100);
+    titleText->setZValue(2);
+    titleText->hide();
+
+    /* ä½œè€…ä¿¡æ¯ */
+    authorText = new QGraphicsTextItem;
+    addItem(authorText);
+    authorText->setHtml(tr("<font color=white>Copyright Â© 2017,Zhang Shuai. All Rights Reserved."));
+    authorText->setFont(QFont("Courier"));
+    authorText->setPos(100, 500);
+    authorText->setZValue(2);
+    authorText->hide();
+
+    /* æ¸¸æˆç»ˆæ­¢æç¤º */
     gameLostText = new QGraphicsTextItem;
     addItem(gameLostText);
     gameLostText->setHtml(tr("<font color=white>Game Over</font>"));
-    gameLostText->setFont(QFont("Courier", 30, QFont::Bold));
-    gameLostText->setPos(250, 250);
+    gameLostText->setFont(QFont("Algerian", 22));
+    gameLostText->setPos(150, 150);
     gameLostText->setZValue(2);
     gameLostText->hide();
 
-    /* ÓÎÏ·¿ªÊ¼ÌáÊ¾ */
-    hasStarted = false;
-    gameHelpText = new QGraphicsTextItem;
-    addItem(gameHelpText);
-    QString helpText = tr("<font color=white size=4>Welcome to zs's WAR OF PLANES Game</font><br><br>");
-    helpText += tr("<font color=white size=3>You are supposed to aviod being hit by enemy bullets,<br>");
-    helpText += tr("and you will score when your bullet hits an enemy plane.<br>");
-    helpText += tr("When you collides with an enemy plane,<br>");
-    helpText += tr("your life will decline by 1 while the enemy plane also gets hurt.<br>");
-    helpText += tr("<br>Here is some help:<br>");
-    helpText += tr("<br>Process Bars:<br>");
-    helpText += tr("Green Process Bar: You life value<br>");
-    helpText += tr("Blue Process Bar: Your skill value<br>");
-    helpText += tr("<br>General Operations:<br>");
-    helpText += tr("W: Up;    S: Down;    A: Left;    D: Right<br>");
-    helpText += tr("Space: Pause or continue the game<br>");
-    helpText += tr("<br>Skill Operations:<br>");
-    helpText += tr("Q: Shoot 3 bullets at a time, costing 5 skill points<br>");
-    helpText += tr("E: Kill all enemy planes at a time, costing 3 skill points<br>");
-    helpText += tr("R: Remove all enemy bullets at a time, costing 7 skill points<br>");
-    helpText += tr("<br>Please push Enter to start the game");
-    helpText += tr("</font>");
-    gameHelpText->setHtml(helpText);
-    gameHelpText->setFont(QFont("Courier"));
-    gameHelpText->setPos(0,0);
-    gameHelpText->setZValue(2);
-    gameHelpText->hide();
+    /* é‡è¯• */
+    QPushButton *retryGameBtn = new QPushButton(tr("Retry"));
+    retryGameBtn->setFont(QFont("Algerian",18));
+    retryGameBtn->setStyleSheet("QPushButton{background: transparent; color:white; }"
+                                "QPushButton:hover{color:red;}");
+    connect(retryGameBtn,SIGNAL(clicked()),this,SLOT(retryGame()));
+    retryGameButton = addWidget(retryGameBtn);
+    retryGameButton->setPos(345,250);
+    retryGameButton->setZValue(2);
+    retryGameButton->hide();
 
-    /* ½øÈë»¶Ó­½çÃæ£¬Ö®ºó°´Enter¿ªÊ¼ÓÎÏ· */
+    /* è¿›å…¥æ¬¢è¿ç•Œé¢ï¼Œä¹‹åæŒ‰Enterå¼€å§‹æ¸¸æˆ */
     welcomeGame();
 }
 
 void Control::timerEvent(QTimerEvent *event)
 {
-    //TODO: ÈôÍæ¼Ò·É»ú×¹»Ù£¬²»ÖªµÀÈçºÎ½áÊøÓÎÏ·
     if(event->timerId()==enemyBulletShootTimerId)
         shootEnemyBullets();
     else if(event->timerId()==myBulletShootTimerId)
@@ -148,53 +189,49 @@ void Control::timerEvent(QTimerEvent *event)
         for(int i=0;i<2;i++)
             generateEnemyPlane();
     }
+    else if(event->timerId()==bossGenerateTimeId)
+        generateBoss();
     else if(event->timerId()==skillQTimerId)
         myBulletType = 0;
 }
 
 void Control::keyPressEvent(QKeyEvent *event)
 {
-    if(hasStarted==false && event->key()!=Qt::Key_Enter) //ÈôÓÎÏ·Î´¿ªÊ¼£¬Ôò³ıEnterÍâµÄ°´¼ü¾ùÎŞĞ§
-        return;
-
-    if(event->key()==Qt::Key_Enter) //Ö»ÓĞÔÚÃ»ÓĞ¿ªÊ¼ÓÎÏ·µÄÊ±ºò°´´Ë¼ü²ÅÓĞĞ§
+    if(event->key()==Qt::Key_W)
     {
-        hasStarted = true;
-        gameHelpText->hide();
-        maskWidget->hide();
-        startGame();
-    }
-    else if(event->key()==Qt::Key_W)
-    {
+        changePlanePosition(myplane, myplane->x(), myplane->y()-10);
         myplane->moveBy(0, -10);
         myplane->update();
     }
     else if(event->key()==Qt::Key_S)
     {
+        changePlanePosition(myplane, myplane->x(), myplane->y()+10);
         myplane->moveBy(0, 10);
         myplane->update();
     }
     else if(event->key()==Qt::Key_A)
     {
+        changePlanePosition(myplane, myplane->x()-10, myplane->y());
         myplane->moveBy(-10, 0);
         myplane->update();
     }
     else if(event->key()==Qt::Key_D)
     {
+        changePlanePosition(myplane, myplane->x()+10, myplane->y());
         myplane->moveBy(10, 0);
         myplane->update();
     }
-    else if(event->key()==Qt::Key_Q && myplane->skill>=5)
+    else if(event->key()==Qt::Key_J && myplane->skill>=5)
     {
-        //°´QµÄ¼¼ÄÜ¿ÉÒÔÒ»´Î·¢Éä3¸ö×Óµ¯£¬µ«ÊÇ»áÏûºÄ5µã¼¼ÄÜ
+        //æŒ‰Qçš„æŠ€èƒ½å¯ä»¥ä¸€æ¬¡å‘å°„3ä¸ªå­å¼¹ï¼Œä½†æ˜¯ä¼šæ¶ˆè€—5ç‚¹æŠ€èƒ½
         myBulletType = 1;
         myplane->skill -= 5;
         updateBar(skillBar, skillFrameBar, SkillBarPos, -10, QBrush(Qt::blue));
-        skillQTimerId = startTimer(5000); //5ÃëÊ¹ÓÃÊ±¼ä
+        skillQTimerId = startTimer(5000); //5ç§’ä½¿ç”¨æ—¶é—´
     }
-    else if(event->key()==Qt::Key_E && myplane->skill>=3)
+    else if(event->key()==Qt::Key_K && myplane->skill>=3)
     {
-        //°´EµÄ¼¼ÄÜ¿ÉÒÔ´òµôËùÓĞ·É»ú£¬ÏûºÄ3µã¼¼ÄÜÖµ
+        //æŒ‰Eçš„æŠ€èƒ½å¯ä»¥æ‰“æ‰æ‰€æœ‰é£æœºï¼Œæ¶ˆè€—3ç‚¹æŠ€èƒ½å€¼
         for(vector<EnemyPlane*>::iterator iter=enemyplanes.begin(); iter!=enemyplanes.end(); iter++)
         {
             score++;
@@ -207,9 +244,9 @@ void Control::keyPressEvent(QKeyEvent *event)
         myplane->skill -= 3;
         updateBar(skillBar, skillFrameBar, SkillBarPos, -6, QBrush(Qt::blue));
     }
-    else if(event->key()==Qt::Key_R && myplane->skill>=7)
+    else if(event->key()==Qt::Key_L && myplane->skill>=7)
     {
-        //°´R¿ÉÒÔÏûµôËùÓĞµĞ»ú×Óµ¯£¬ÏûºÄ7µã¼¼ÄÜÖµ
+        //æŒ‰Rå¯ä»¥æ¶ˆæ‰æ‰€æœ‰æ•Œæœºå­å¼¹ï¼Œæ¶ˆè€—7ç‚¹æŠ€èƒ½å€¼
         for(vector<Bullet*>::iterator it = enemybullets.begin(); it!= enemybullets.end(); it++)
         {
             removeItem(*it);
@@ -226,31 +263,46 @@ void Control::keyPressEvent(QKeyEvent *event)
 
 bool Control::generateEnemyPlane()
 {
-	/* Ëæ»úÔÚµÚÒ»ĞĞÉú³ÉµĞ»ú */
-    srand(time(NULL));//³õÊ¼»¯Ê±¼äÖÖ×Ó£¬Ö®Ç°Õâ¸ö·ÅÔÚÑ­»·ÄÚ»áµ¼ÖÂ¿¨ËÀ
-    int x = rand() % (int)width(); //µĞ»ú×î×ó¶ËÎ»ÖÃ
+	/* éšæœºåœ¨ç¬¬ä¸€è¡Œç”Ÿæˆæ•Œæœº */
+    srand(time(NULL));//åˆå§‹åŒ–æ—¶é—´ç§å­ï¼Œä¹‹å‰è¿™ä¸ªæ”¾åœ¨å¾ªç¯å†…ä¼šå¯¼è‡´å¡æ­»
+    int x = rand() % (int)width(); //æ•Œæœºæœ€å·¦ç«¯ä½ç½®
     QPixmap pixmap(QPixmap(QString::fromStdString(enemyPlaneImageFile)));
-    while(!items(x, 0, pixmap.width(), pixmap.height(), Qt::IntersectsItemBoundingRect, Qt::DescendingOrder).empty()) //ÉèÖÃÏà½»Ä£Ê½
+    while(!items(x, 0, pixmap.width(), pixmap.height(), Qt::IntersectsItemBoundingRect, Qt::DescendingOrder).empty()) //è®¾ç½®ç›¸äº¤æ¨¡å¼
         x = rand() % (int)width();
 
-    /* ĞÂÔöµĞ»ú */
-    EnemyPlane *enemy = new EnemyPlane(x, 0, enemyPlaneImageFile, this, enemyLife);
+    /* æ–°å¢æ•Œæœº */
+    EnemyPlane *enemy = new EnemyPlane(x, 0, enemyPlaneImageFile, this, ORD, enemyLife);
+    enemyplanes.push_back(enemy);
+    return true;
+}
+
+bool Control::generateBoss()
+{
+    /* éšæœºåœ¨ç¬¬ä¸€è¡Œç”Ÿæˆæ•Œæœº */
+    srand(time(NULL));//åˆå§‹åŒ–æ—¶é—´ç§å­ï¼Œä¹‹å‰è¿™ä¸ªæ”¾åœ¨å¾ªç¯å†…ä¼šå¯¼è‡´å¡æ­»
+    int x = rand() % (int)width(); //æ•Œæœºæœ€å·¦ç«¯ä½ç½®
+    QPixmap pixmap(QPixmap(QString::fromStdString(bossImageFile)));
+    while(!items(x, 0, pixmap.width(), pixmap.height(), Qt::IntersectsItemBoundingRect, Qt::DescendingOrder).empty()) //è®¾ç½®ç›¸äº¤æ¨¡å¼
+        x = rand() % (int)width();
+
+    /* æ–°å¢æ•Œæœº */
+    EnemyPlane *enemy = new EnemyPlane(x, 0, bossImageFile, this, BOSS, bossLife);
     enemyplanes.push_back(enemy);
     return true;
 }
 
 bool Control::changePlanePosition(Plane *plane, int newX, int newY)
 {
-    /* ¼ì²éÎ»ÖÃÊÇ·ñÓĞ±ä»¯£¬ÎŞ±ä»¯ÔòÖ±½Ó·µ»Ø */
+    /* æ£€æŸ¥ä½ç½®æ˜¯å¦æœ‰å˜åŒ–ï¼Œæ— å˜åŒ–åˆ™ç›´æ¥è¿”å› */
     if (plane->x() == newX && plane->y() == newY)
 		return true;
 
-    /* ¼ì²éĞÂÎ»ÖÃÊÇ·ñºÏ·¨£¬²»ºÏ·¨ÔòÖ±½Ó·µ»Ø */
+    /* æ£€æŸ¥æ–°ä½ç½®æ˜¯å¦åˆæ³•ï¼Œä¸åˆæ³•åˆ™ç›´æ¥è¿”å› */
     if (newX<0 || newX>width() || newY<0 || newY>height())
 	{
-        if (plane->part == ME) //Íæ¼Ò·É»ú²»ÔÊĞí³ö½ç
+        if (plane->part == ME) //ç©å®¶é£æœºä¸å…è®¸å‡ºç•Œ
 			return true;
-        else if (plane->part == ENEMY) //µĞ»ú²»ÔÊĞí³öÉÏ½ç¡¢×ó½ç¡¢ÓÒ½ç£¬µ«³öÏÂ½çÖ®ºó½«±»É¾³ı
+        else if (plane->part == ENEMY) //æ•Œæœºä¸å…è®¸å‡ºä¸Šç•Œã€å·¦ç•Œã€å³ç•Œï¼Œä½†å‡ºä¸‹ç•Œä¹‹åå°†è¢«åˆ é™¤
 		{
             if (newY>height())
 			{
@@ -262,40 +314,56 @@ bool Control::changePlanePosition(Plane *plane, int newX, int newY)
 		}
 	}
 
-	/* ¼ì²éĞÂÎ»ÖÃÊÇ·ñÓëÄ³Ò»·É»úÎ»ÖÃ³åÍ» */
-	/* Ê×ÏÈ¼ì²éÊÇ·ñÓëµĞ»úÅö×² */
-	for (vector<EnemyPlane*>::iterator it = enemyplanes.begin(); it != enemyplanes.end(); ) //±éÀúµĞ»ú
+    /* è‹¥ä¸ºç©å®¶é£æœºï¼Œåˆ™é¦–å…ˆæ£€æŸ¥æ˜¯å¦ä¸è¡¥ç»™ç¢°æ’ï¼Œé‡åˆ°ç”Ÿå‘½è¡¥ç»™åˆ™+5 */
+    if(plane->part==ME)
+        for(vector<Object*>::iterator it=lifesupplys.begin();it!=lifesupplys.end(); )
+        {
+            if(plane->collidesWithItem(*it))
+            {
+                plane->life = min(plane->life+10, myLife);
+                updateBar(lifeBar,lifeFrameBar,LifeBarPos,+20,Qt::green);
+                removeItem(*it);
+                delete *it;
+                it = lifesupplys.erase(it);
+            }
+            else
+                it++;
+        }
+
+	/* æ£€æŸ¥æ–°ä½ç½®æ˜¯å¦ä¸æŸä¸€é£æœºä½ç½®å†²çª */
+	/* é¦–å…ˆæ£€æŸ¥æ˜¯å¦ä¸æ•Œæœºç¢°æ’ */
+	for (vector<EnemyPlane*>::iterator it = enemyplanes.begin(); it != enemyplanes.end(); ) //éå†æ•Œæœº
 	{
-		if (plane == *it) //Ìø¹ı×Ô¼º
+		if (plane == *it) //è·³è¿‡è‡ªå·±
 		{
 			it++;
 			continue;
 		}
 
-		bool alive = true; //itËùÖ¸ÏòµÄ·É»úÊÇ·ñ»¹ÓĞÉúÃüÖµ
+		bool alive = true; //itæ‰€æŒ‡å‘çš„é£æœºæ˜¯å¦è¿˜æœ‰ç”Ÿå‘½å€¼
         if (plane->collidesWithItem(*it))
 		{
-			/* ÈôÎªÍæ¼Ò·É»ú£¬Á½¼Ü·É»ú¾ùcrash£¬ÉúÃüÖµ¶¼¼õ1 */
+			/* è‹¥ä¸ºç©å®¶é£æœºï¼Œä¸¤æ¶é£æœºå‡crashï¼Œç”Ÿå‘½å€¼éƒ½å‡1 */
             if (plane->part == ME)
 			{
                 plane->crash(this);
                 alive = (*it)->crash(this);
                 updateBar(lifeBar, lifeFrameBar, LifeBarPos, -2, QBrush(Qt::green));
 			}
-            if (plane->part == ENEMY) //ÈôÍ¬ÎªµĞ»ú£¬Ôò²»ÔÊĞí¸Ä±äÎ»ÖÃ£¬NOCHANGE
+            if (plane->part == ENEMY) //è‹¥åŒä¸ºæ•Œæœºï¼Œåˆ™ä¸å…è®¸æ”¹å˜ä½ç½®ï¼ŒNOCHANGE
 				return true;
 		}
 
 		if (alive)
 			it++;
-		else //Èô·É»ú×¹»Ù£¬Ôò½«´Ë·É»úÈ¥µô
+		else //è‹¥é£æœºå æ¯ï¼Œåˆ™å°†æ­¤é£æœºå»æ‰
 		{
 			delete *it;
 			it = enemyplanes.erase(it);
 		}
 	}
 
-    /* Èô´Ë·É»úÎªµĞ»ú£¬ÇÒÓëÍæ¼Ò·É»ú·¢ÉúÁËÅö×² */
+    /* è‹¥æ­¤é£æœºä¸ºæ•Œæœºï¼Œä¸”ä¸ç©å®¶é£æœºå‘ç”Ÿäº†ç¢°æ’ */
     if (plane->part == ENEMY && plane->collidesWithItem(myplane))
     {
         myplane->crash(this);
@@ -303,7 +371,7 @@ bool Control::changePlanePosition(Plane *plane, int newX, int newY)
         updateBar(lifeBar, lifeFrameBar, LifeBarPos, -2, QBrush(Qt::green));
     }
 
-	/* Èôplane´æ»î£¬Ôò¸ü¸Ä×ø±ê²¢Í¬²½ÆÁÄ» */
+	/* è‹¥planeå­˜æ´»ï¼Œåˆ™æ›´æ”¹åæ ‡å¹¶åŒæ­¥å±å¹• */
 	if (plane->life > 0)
 	{
         plane->moveBy(newX-plane->x(), newY-plane->y());
@@ -315,15 +383,15 @@ bool Control::changePlanePosition(Plane *plane, int newX, int newY)
 
 bool Control::updateEnemyPlanes()
 {
-    /* Èôµ±Ç°µĞ»úÉÙÓÚ1£¬Ôò×Ô¶¯Éú³ÉµĞ»ú£¬ÊıÄ¿Ëæ»úµ«Ğ¡ÓÚ5 */
+    /* è‹¥å½“å‰æ•Œæœºå°‘äº1ï¼Œåˆ™è‡ªåŠ¨ç”Ÿæˆæ•Œæœºï¼Œæ•°ç›®éšæœºä½†å°äº3 */
     if (enemyplanes.size() < 1)
 	{
-        int genNum = rand() % 5;
+        int genNum = rand() % 3;
 		for (int i = 0; i < genNum; i++)
 			generateEnemyPlane();
     }
 
-	/* ËùÓĞµĞ»úÒÆ¶¯Î»ÖÃ */
+	/* æ‰€æœ‰æ•Œæœºç§»åŠ¨ä½ç½® */
 	for (vector<EnemyPlane*>::iterator it = enemyplanes.begin(); it != enemyplanes.end(); )
 	{
         //qDebug() << it-enemyplanes.begin() << "  (" << (*it)->x() << "," << (*it)->y() << ")";
@@ -339,12 +407,12 @@ bool Control::updateEnemyPlanes()
 
 bool Control::changeBulletPosition(Bullet * bullet, int newX, int newY)
 {
-	/* ¼ì²éÎ»ÖÃÊÇ·ñÓĞ±ä»¯£¬ÎŞ±ä»¯Ôò·µ»Øtrue */
+	/* æ£€æŸ¥ä½ç½®æ˜¯å¦æœ‰å˜åŒ–ï¼Œæ— å˜åŒ–åˆ™è¿”å›true */
     if (bullet->x() == newX && bullet->y() == newY)
 		return true;
 
-	/* ¼ì²é×Óµ¯ÊÇ·ñ»÷ÖĞÄ³Ò»·É»ú */
-	/* Ê×ÏÈ¼ì²éÍæ¼Ò·É»ú */
+	/* æ£€æŸ¥å­å¼¹æ˜¯å¦å‡»ä¸­æŸä¸€é£æœº */
+	/* é¦–å…ˆæ£€æŸ¥ç©å®¶é£æœº */
     if (bullet->part==ENEMY && bullet->collidesWithItem(myplane))
 	{
         //qDebug() << "myplane: " << myplane->life;
@@ -356,14 +424,14 @@ bool Control::changeBulletPosition(Bullet * bullet, int newX, int newY)
 	}
     else if(bullet->part==ME)
     {
-        /* È»ºó¼ì²éµĞ»ú£ºÈôµĞ»úÒÑ¾­Ã»ÓĞÉúÃüÖµ£¬¾Í´ÓenemyplanesÖĞÉ¾È¥ */
+        /* ç„¶åæ£€æŸ¥æ•Œæœºï¼šè‹¥æ•Œæœºå·²ç»æ²¡æœ‰ç”Ÿå‘½å€¼ï¼Œå°±ä»enemyplanesä¸­åˆ å» */
         for (vector<EnemyPlane*>::iterator it = enemyplanes.begin(); it != enemyplanes.end(); )
         {
             bool alive = true;
             if (bullet->collidesWithItem(*it))
             {
                 bullet->hit(this);
-                alive = (*it)->crash(this)==false;
+                alive = (*it)->crash(this);
                 myplane->skill++;
                 updateBar(skillBar, skillFrameBar, SkillBarPos, +2, QBrush(Qt::blue));
                 score++;
@@ -376,14 +444,23 @@ bool Control::changeBulletPosition(Bullet * bullet, int newX, int newY)
             {
                 delete *it;
                 it = enemyplanes.erase(it);
+                /* 25%çš„æ¦‚ç‡æ‰è½ç”Ÿå‘½è¡¥ç»™ */
+                srand(time(NULL));
+                if(rand()%4==0)
+                {
+                    Object *lifeSupply = new Object(LIFESUPPLY, lifeSupplyImageFile);
+                    lifeSupply->setPos(bullet->pos());
+                    lifesupplys.push_back(lifeSupply);
+                    addItem(lifeSupply);
+                }
             }
         }
     }
 
-	/* Èô×Óµ¯»¹¾ßÓĞÉ±ÉËÁ¦Ôò¸üĞÂÎ»ÖÃ²¢Í¬²½ÆÁÄ» */
+	/* è‹¥å­å¼¹è¿˜å…·æœ‰æ€ä¼¤åŠ›åˆ™æ›´æ–°ä½ç½®å¹¶åŒæ­¥å±å¹• */
 	if (bullet->power > 0)
 	{
-		/* Èô´ËÊ±×Óµ¯ÊÔÍ¼´ò³ö±ß½ç£¬ÔòÏú»Ù×Óµ¯ */
+		/* è‹¥æ­¤æ—¶å­å¼¹è¯•å›¾æ‰“å‡ºè¾¹ç•Œï¼Œåˆ™é”€æ¯å­å¼¹ */
         if (newX <= 0 || newX >= width() || newY <= 0 || newY >= height())
 		{
             bullet->delScreen(this);
@@ -414,14 +491,36 @@ void Control::updateEnemyBullets()
 
 void Control::shootEnemyBullets()
 {
-    /* ÈÔ´æ»îµÄµĞ»ú·¢³öĞÂ×Óµ¯£¬ĞÂ×Óµ¯ÔÚµĞ»úÅÚ¹ÜÍâµÄÎ»ÖÃ */
+    /* ä»å­˜æ´»çš„æ•Œæœºå‘å‡ºæ–°å­å¼¹ï¼Œæ–°å­å¼¹åœ¨æ•Œæœºç‚®ç®¡å¤–çš„ä½ç½® */
     for (vector<EnemyPlane*>::iterator iter = enemyplanes.begin(); iter != enemyplanes.end(); iter++)
 		if ((*iter)->life > 0)
         {
-            Bullet *bullet = new Bullet(ENEMY, (*iter)->x()+(*iter)->pixmap().width()/2, (*iter)->y()+(*iter)->pixmap().height()-15,
+            if((*iter)->type==ORD)
+            {
+                Bullet *bullet = new Bullet(ENEMY, (*iter)->x()+(*iter)->pixmap().width()/2, (*iter)->y()+(*iter)->pixmap().height()-15,
                                         enemyBulletImageFile, QPointF(0,1), enemyBulletPower);
-            enemybullets.push_back(bullet);
-            addItem(bullet);
+                enemybullets.push_back(bullet);
+                addItem(bullet);
+            }
+            else if((*iter)->type==BOSS)
+            {
+                Bullet *bullet0 = new Bullet(ENEMY, (*iter)->x()+(*iter)->pixmap().width()/2, (*iter)->y()+(*iter)->pixmap().height()-15,
+                                     bossBulletImageFile, QPointF(0,1), bossBulletPower);
+                enemybullets.push_back(bullet0);
+                addItem(bullet0);
+
+                Bullet *bullet1 = new Bullet(ENEMY, (*iter)->x()+(*iter)->pixmap().width()/2, (*iter)->y()+(*iter)->pixmap().height()-15,
+                                     bossBulletImageFile, QPointF(-1,1), bossBulletPower);
+                bullet1->setRotation(45);
+                enemybullets.push_back(bullet1);
+                addItem(bullet1);
+
+                Bullet *bullet2 = new Bullet(ENEMY, (*iter)->x()+(*iter)->pixmap().width()/2, (*iter)->y()+(*iter)->pixmap().height()-15,
+                                     bossBulletImageFile, QPointF(1,1), bossBulletPower);
+                bullet2->setRotation(-45);
+                enemybullets.push_back(bullet2);
+                addItem(bullet2);
+            }
         }
 }
 
@@ -436,14 +535,14 @@ void Control::updateMyBullets()
 		{
 			delete *it;
             it = mybullets.erase(it);
-		}
-	}
+        }
 }
 
-//±ê¼Ç£ºÕâÀï»¹ĞèÒªÌí¼ÓÍæ¼Ò×Óµ¯×Ô¶¯·¢ÉäµÄÂß¼­
+//æ ‡è®°ï¼šè¿™é‡Œè¿˜éœ€è¦æ·»åŠ ç©å®¶å­å¼¹è‡ªåŠ¨å‘å°„çš„é€»è¾‘
+}
 void Control::shootBullet()
 {
-    /* Íæ¼Ò·É»ú·¢³öĞÂ×Óµ¯£¬ĞÂ×Óµ¯ÔÚÍæ¼Ò·É»úÅÚ¹ÜÍâµÄÎ»ÖÃ */
+    /* ç©å®¶é£æœºå‘å‡ºæ–°å­å¼¹ï¼Œæ–°å­å¼¹åœ¨ç©å®¶é£æœºç‚®ç®¡å¤–çš„ä½ç½® */
     if(myBulletType==0)
     {
         Bullet *bullet = new Bullet(ME, myplane->x()+40, myplane->y()-38,
@@ -494,8 +593,11 @@ void Control::pauseGame()
         killTimer(allBulletMoveTimerId);
         killTimer(enemyPlaneMoveTimerId);
         killTimer(enemyPlaneGenerateTimerId);
+        killTimer(bossGenerateTimeId);
         maskWidget->show();
-        gamePausedText->show();
+        continueGameButton->show();
+        helpGameButton->show();
+        quitGameButton->show();
     }
     else
     {
@@ -505,8 +607,11 @@ void Control::pauseGame()
         allBulletMoveTimerId = startTimer(allBulletMoveTimerItv);
         enemyPlaneMoveTimerId = startTimer(enemyPlaneMoveTimerItv);
         enemyPlaneGenerateTimerId = startTimer(enemyPlaneGenerateTimerItv);
+        bossGenerateTimeId = startTimer(bossGenerateTimeItv);
         maskWidget->hide();
-        gamePausedText->hide();
+        continueGameButton->hide();
+        helpGameButton->hide();
+        quitGameButton->hide();
     }
 }
 
@@ -517,32 +622,115 @@ void Control::loseGame()
     killTimer(allBulletMoveTimerId);
     killTimer(enemyPlaneMoveTimerId);
     killTimer(enemyPlaneGenerateTimerId);
+    killTimer(bossGenerateTimeId);
     maskWidget->show();
-    gameLostText->setHtml(tr("<font color=white>Game Over<br>Score: %1</font>").arg(score));
+    gameLostText->setHtml(tr("<font color=white>Game Over, Your Score: %1</font>").arg(score));
     gameLostText->show();
+    retryGameButton->show();
+    helpGameButton->show();
+    quitGameButton->show();
+}
+
+void Control::retryGame()
+{
+    //ç©å®¶é£æœºå·²æ¯ï¼Œæ•…ä¸éœ€è¦å†æ¬¡åˆ é™¤
+
+    for(auto iter:enemyplanes)
+    {
+        removeItem(iter);
+        delete iter;
+    }
+    enemyplanes.clear();
+
+    for(auto it:mybullets)
+    {
+        removeItem(it);
+        delete it;
+    }
+    mybullets.clear();
+
+    for(auto it:enemybullets)
+    {
+        removeItem(it);
+        delete it;
+    }
+    enemybullets.clear();
+
+    gameLostText->hide();
+    retryGameButton->hide();
+    helpGameButton->hide();
+    quitGameButton->hide();
+    startGame();
+}
+
+void Control::quitGame()
+{
+    exit(0);
 }
 
 void Control::welcomeGame()
 {
     hasStarted = false;
     maskWidget->show();
-    gameHelpText->show();
+    titleText->show();
+    startGameButton->show();
+    helpGameButton->show();
+    quitGameButton->show();
+    authorText->show();
 }
 
 void Control::startGame()
 {
-    /* ÉèÖÃ¸÷¶¯×÷¸üĞÂÊ±ÖÓ */
+    score = 0;
+    scoreText->setHtml(tr("<font color=white>SCORE: %1</font>").arg(score));
+
+    hasStarted = true;
+    titleText->hide();
+    startGameButton->hide();
+    helpGameButton->hide();
+    quitGameButton->hide();
+    authorText->hide();
+    maskWidget->hide();
+
+    scoreText->show();
+    lifeFrameBar->show();
+    lifeBar->show();
+    skillFrameBar->show();
+    skillBar->show();
+
+    /* è®¾ç½®å„åŠ¨ä½œæ›´æ–°æ—¶é’Ÿ */
     myBulletShootTimerId = startTimer(myBulletShootTimerItv);
     enemyBulletShootTimerId = startTimer(enemyBulletShootTimerItv);
     allBulletMoveTimerId = startTimer(allBulletMoveTimerItv);
     enemyPlaneMoveTimerId = startTimer(enemyPlaneMoveTimerItv);
     enemyPlaneGenerateTimerId = startTimer(enemyPlaneGenerateTimerItv);
+    bossGenerateTimeId = startTimer(bossGenerateTimeItv);
 
-    /* Ìí¼ÓÍæ¼Ò·É»ú */
+    /* æ·»åŠ ç©å®¶é£æœº */
     myplane = new MyPlane(width() / 2, height() / 2, myPlaneImageFile, this, myLife, mySkill);
     myplane->synScreen(this);
 
-    /* Ìí¼ÓµĞ»ú */
+    /* æ·»åŠ æ•Œæœº */
     for (int i = 0; i < 3; i++)
         generateEnemyPlane();
+}
+
+void Control::showHelpMessage()
+{
+    QString helpText;
+    helpText += tr("æ¬¢è¿æ¥åˆ°é£æœºå¤§æˆ˜\n");
+    helpText += tr("\nå½“ä½ å‡»è½æ•Œæœºæ—¶ï¼Œä½ çš„å¾—åˆ†å’ŒæŠ€èƒ½å€¼éƒ½ä¼šç›¸åº”åœ°å¢åŠ \n");
+    helpText += tr("è‹¥ä½ è¢«æ•Œæœºå‡»ä¸­æˆ–æ’åˆ°ï¼Œä½ çš„ç”Ÿå‘½å€¼ä¼šç›¸åº”å‡å°‘\n");
+    helpText += tr("å½“ä½ çš„æŠ€èƒ½å€¼è¾¾åˆ°ä¸€å®šé‡çš„æ—¶å€™ï¼Œä¾¿å¯é‡Šæ”¾æŠ€èƒ½\n");
+    helpText += tr("\nè¿›åº¦æ¡ï¼š\n");
+    helpText += tr("ç»¿è‰²è¿›åº¦æ¡ï¼šä½ çš„ç”Ÿå‘½å€¼\n");
+    helpText += tr("è“è‰²è¿›åº¦æ¡ï¼šä½ çš„æŠ€èƒ½å€¼\n");
+    helpText += tr("\næ“ä½œï¼š\n");
+    helpText += tr("Wï¼šä¸Šï¼› Sï¼šä¸‹ï¼› Aï¼šå·¦ï¼› Dï¼šå³\n");
+    helpText += tr("Jï¼šè¶…çº§å­å¼¹æŠ€èƒ½ï¼Œä¸€æ¬¡å‘å°„ä¸‰ä¸ªæ–¹å‘çš„å­å¼¹ï¼Œæ¶ˆè€—5ç‚¹æŠ€èƒ½\n");
+    helpText += tr("Kï¼šè½°ç‚¸æŠ€èƒ½ï¼Œä¸€æ¬¡æ€§ç‚¸æ‰æ‰€æœ‰æ•Œæœºï¼Œæ¶ˆè€—3ç‚¹æŠ€èƒ½\n");
+    helpText += tr("Lï¼šå­å¼¹æ‹¦æˆªæŠ€èƒ½ï¼Œä¸€æ¬¡æ€§æ‹¦æˆªæ‰æ‰€æœ‰å­å¼¹ï¼Œæ¶ˆè€—7ç‚¹æŠ€èƒ½\n");
+    helpText += tr("\nè¡¥ç»™ï¼š\n");
+    helpText += tr("è¢«å‡»æ¯çš„æ•Œæœºéšæœºç”Ÿæˆè¡¥ç»™ï¼Œå³ç»¿è‰²çš„åŠ å·ï¼Œæ¯æ¬¡å¯è¡¥å……10ç‚¹ç”Ÿå‘½å€¼");
+    QMessageBox::information(NULL,tr("æ¸¸æˆå¸®åŠ©"),helpText);
 }

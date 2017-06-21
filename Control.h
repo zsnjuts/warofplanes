@@ -24,11 +24,6 @@ class Control: public QGraphicsScene
     Q_OBJECT
 public:
 	Control();
-    Control(int boardWidth, int boardHeight,
-        const string &myPlaneImageFile, int myLife, int mySkill,
-                     const string &myBulletImageFile, int myBulletPower,
-        const string &enemyPlaneImageFile, int enemyLife,
-                     const string &enemyBulletImageFile, int enemyBulletPower);
 
 protected:
     void timerEvent(QTimerEvent *event);
@@ -40,28 +35,34 @@ private:
     int mySkill;
 
     string myBulletImageFile;
-    int myBulletImageScaleHeight;
 	int myBulletPower;
-	int myBulletSpeed;
 
     string enemyPlaneImageFile;
 	int enemyLife;
 
     string enemyBulletImageFile;
-    int enemyBulletImageScaleHeight;
-	int enemyBulletSpeed;
 	int enemyBulletPower;
+
+    string bossImageFile;
+    int bossLife;
+
+    string bossBulletImageFile;
+    int bossBulletPower;
 
     int myBulletShootTimerId;
     int enemyBulletShootTimerId;
     int allBulletMoveTimerId;
     int enemyPlaneMoveTimerId;
     int enemyPlaneGenerateTimerId;
+    int bossGenerateTimeId;
+
+    string lifeSupplyImageFile;
 
     MyPlane *myplane;
     vector<Bullet*> mybullets;
     vector<EnemyPlane *> enemyplanes;
     vector<Bullet*> enemybullets;
+    vector<Object*> lifesupplys;
 
     QGraphicsRectItem *lifeFrameBar;
     QGraphicsRectItem *lifeBar;
@@ -71,38 +72,47 @@ private:
     QMediaPlayer *player;
     QMediaPlaylist *playList;
 
-	bool generateEnemyPlane(); //Éú³ÉÒ»¼ÜµĞ»ú
+    bool generateEnemyPlane(); //ç”Ÿæˆä¸€æ¶æ•Œæœº
+    bool generateBoss(); //ç”ŸæˆBoss
 	
 	bool changePlanePosition(Plane *plane, int newX, int newY);
-	bool updateEnemyPlanes(); //¸ù¾İµĞ»ú·½Ïò¸üĞÂµĞ»úÎ»ÖÃ
+	bool updateEnemyPlanes(); //æ ¹æ®æ•Œæœºæ–¹å‘æ›´æ–°æ•Œæœºä½ç½®
 	
-	bool changeBulletPosition(Bullet *bullet, int newX, int newY); //¸Ä±ä×Óµ¯Î»ÖÃ£¬·µ»Ø×Óµ¯ÊÇ·ñ»¹ÔÚÕ½³¡
-	void shootEnemyBullets(); //ËùÓĞµĞ»ú·¢Éä×Óµ¯
-	void updateMyBullets(); //¸üĞÂÍæ¼ÒËùÓĞ×Óµ¯Î»ÖÃ
-	void updateEnemyBullets(); //¸üĞÂµĞ»úËùÓĞ×Óµ¯Î»ÖÃ
-	void shootBullet(); //Íæ¼Ò·É»ú·¢Éä×Óµ¯
+	bool changeBulletPosition(Bullet *bullet, int newX, int newY); //æ”¹å˜å­å¼¹ä½ç½®ï¼Œè¿”å›å­å¼¹æ˜¯å¦è¿˜åœ¨æˆ˜åœº
+	void shootEnemyBullets(); //æ‰€æœ‰æ•Œæœºå‘å°„å­å¼¹
+	void updateMyBullets(); //æ›´æ–°ç©å®¶æ‰€æœ‰å­å¼¹ä½ç½®
+	void updateEnemyBullets(); //æ›´æ–°æ•Œæœºæ‰€æœ‰å­å¼¹ä½ç½®
+	void shootBullet(); //ç©å®¶é£æœºå‘å°„å­å¼¹
 
-    void updateBar(QGraphicsRectItem *bar, QGraphicsRectItem *frameBar, const QPointF &pos, qreal var, const QBrush &brush); //¸üĞÂÑªÌõ»ò¼¼ÄÜÌõ
+    void updateBar(QGraphicsRectItem *bar, QGraphicsRectItem *frameBar, const QPointF &pos, qreal var, const QBrush &brush); //æ›´æ–°è¡€æ¡æˆ–æŠ€èƒ½æ¡
 
-    bool isPause; //ÓÎÏ·ÊÇ·ñÔİÍ£
-    QGraphicsWidget *maskWidget; //ÕÚÕÖÃæ°å
-    QGraphicsTextItem *gamePausedText; //ÓÎÏ·ÔİÍ£ÏÔÊ¾ÎÄ±¾
-    void pauseGame(); //ÔİÍ£ÓÎÏ·
+    bool hasStarted; //æ˜¯å¦å·²ç»å¼€å§‹æ¸¸æˆ
+    bool isPause; //æ¸¸æˆæ˜¯å¦æš‚åœ
+    int myBulletType; //æ˜¯å¦ä½¿ç”¨æŠ€èƒ½
+    int skillQTimerId; //æŠ€èƒ½Qä½¿ç”¨æ—¶é—´
+    int score; //æ‰“æ‰çš„é£æœºæ•°
 
-    int myBulletType; //ÊÇ·ñÊ¹ÓÃ¼¼ÄÜ
-    int skillQTimerId; //¼¼ÄÜQÊ¹ÓÃÊ±¼ä
-    int score; //´òµôµÄ·É»úÊı
-    QGraphicsTextItem *scoreText; //ÏÔÊ¾µ±Ç°´òµôµÄ·É»úÊı
+    QGraphicsTextItem *titleText; //æ¸¸æˆæ ‡é¢˜
+    QGraphicsTextItem *authorText; //ä½œè€…ä¿¡æ¯
+    QGraphicsTextItem *scoreText; //æ˜¾ç¤ºå½“å‰æ‰“æ‰çš„é£æœºæ•°
+    QGraphicsTextItem *gameLostText; //ç©å®¶æ­»äº¡æ˜¾ç¤ºæ–‡æœ¬
+    QGraphicsTextItem *gameHelpText; //æ¸¸æˆåˆå§‹å¸®åŠ©
+    void welcomeGame(); //åˆå§‹ç•Œé¢
 
-    QGraphicsTextItem *gameLostText; //Íæ¼ÒËÀÍöÏÔÊ¾ÎÄ±¾
-    void loseGame(); //Íæ¼ÒÉúÃüÖµÓÃ¾¡
+    QGraphicsWidget *maskWidget; //é®ç½©é¢æ¿
+    QGraphicsWidget *startGameButton;
+    QGraphicsWidget *helpGameButton;
+    QGraphicsWidget *continueGameButton;
+    QGraphicsWidget *retryGameButton;
+    QGraphicsWidget *quitGameButton;
 
-    QGraphicsTextItem *gameHelpText; //ÓÎÏ·³õÊ¼°ïÖú
-    void welcomeGame(); //³õÊ¼½çÃæ
-
-    bool hasStarted; //ÊÇ·ñÒÑ¾­¿ªÊ¼ÓÎÏ·
-    void startGame(); //¿ªÊ¼ÓÎÏ·
-	
+protected slots:
+    void startGame(); //å¼€å§‹æ¸¸æˆ
+    void showHelpMessage(); //æ˜¾ç¤ºå¸®åŠ©ä¿¡æ¯
+    void pauseGame(); //æš‚åœæ¸¸æˆ
+    void loseGame(); //ç©å®¶ç”Ÿå‘½å€¼ç”¨å°½
+    void retryGame();  //é‡æ–°å¼€å§‹
+    void quitGame(); //ç»“æŸæ¸¸æˆ
 };
 
 #endif // !CONTROL_H

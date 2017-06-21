@@ -7,27 +7,11 @@ Bullet::Bullet()
 }
 
 Bullet::Bullet(WarPart part, int x, int y, const string &imageFile, const QPointF &dir, int power):
-    QGraphicsPixmapItem(QPixmap(QString::fromStdString(imageFile)))
+    Object(part, imageFile)
 {
-    this->part = part;
     setPos(x, y);
 	this->dir = dir;
 	this->power = power;
-}
-
-void Bullet::delScreen(QGraphicsScene *scene)
-{
-    scene->removeItem(this);
-    update();
-}
-
-void Bullet::synScreen(QGraphicsScene *scene)
-{
-    if(!scene->items().contains(this))
-    {
-        scene->addItem(this);
-        update();
-    }
 }
 
 pair<qreal, qreal> Bullet::updatePosition()
@@ -39,7 +23,7 @@ bool Bullet::hit(QGraphicsScene *scene)
 {
 	if (power <= 0)
 		return false;
-	else if (--power <= 0) //杀伤力在此次hit之后耗尽
+	else if (--power <= 0) //鏉�浼ゅ姏鍦ㄦ娆it涔嬪悗鑰楀敖
 	{
         delScreen(scene);
 		return false;

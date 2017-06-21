@@ -3,16 +3,18 @@
 
 #include "Plane.h"
 
+enum EnemyType {ORD, BOSS};
+
 class EnemyPlane :protected Plane
 {
 	friend class Control;
-	enum Direction { UP, DOWN, LEFT, RIGHT };
 public:
 	EnemyPlane();
-    EnemyPlane(int x, int y, const string &imageFile, QGraphicsScene *scene, int life);
+    EnemyPlane(int x, int y, const string &imageFile, QGraphicsScene *scene, EnemyType type, int life);
 	pair<int,int> updatePosition();
 
-private:
+protected:
+    EnemyType type;
 	
 };
 

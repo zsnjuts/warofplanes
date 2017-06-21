@@ -3,28 +3,24 @@
 
 #include <QtWidgets>
 
+#include "Object.h"
 #include <utility>
 #include <fstream>
 #include <iostream>
 using namespace std;
 
-enum WarPart { ME, ENEMY };
-
-class Bullet: public QGraphicsPixmapItem
+class Bullet: public Object
 {
 	friend class Control;
 public:
 	Bullet();
     Bullet(WarPart part, int x, int y, const string &imageFile, const QPointF &dir, int power);
-    void synScreen(QGraphicsScene *scene);
-    void delScreen(QGraphicsScene *scene);
     pair<qreal,qreal> updatePosition();
     bool hit(QGraphicsScene *scene);
 
 private:
-    WarPart part;
-    QPointF dir; //子弹方向，同时也控制了子弹速度
-	int power; //子弹杀伤力
+    QPointF dir; //瀛愬脊鏂瑰悜锛屽悓鏃朵篃鎺у埗浜嗗瓙寮归�熷害
+	int power; //瀛愬脊鏉�浼ゅ姏
 };
 
 #endif // !BULLET_H

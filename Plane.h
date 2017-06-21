@@ -2,24 +2,22 @@
 #define PLANE_H
 
 #include "Bullet.h"
+#include "Object.h"
 #include <QtWidgets>
 #include <cstring>
 #include <vector>
 using namespace std;
 
-class Plane: public QGraphicsPixmapItem
+class Plane: public Object
 {
 	friend class Control;
 public:
 	Plane();
     Plane(int x, int y, const string &imageFile, QGraphicsScene *scene, int life, enum WarPart part);
-    void delScreen(QGraphicsScene *scene); //ÔÚÆÁÄ»ÉÏ½«´Ë·É»úÄ¨È¥
-    void synScreen(QGraphicsScene *scene); //ÔÚÆÁÄ»ÏàÓ¦Î»ÖÃÌí¼Ó´Ë·É»ú
-    bool crash(QGraphicsScene *scene); //·É»ú·¢ÉúÅö×²
+    bool crash(QGraphicsScene *scene); //é£æœºå‘ç”Ÿç¢°æ’
 	
 protected:
-	int life; //ÉúÃüÖµ
-    enum WarPart part;
+	int life; //ç”Ÿå‘½å€¼
 };
 
 #endif // !PLANE_H

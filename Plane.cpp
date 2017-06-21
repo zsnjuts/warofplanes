@@ -9,35 +9,19 @@ Plane::Plane()
 }
 
 Plane::Plane(int x, int y, const string &imageFile, QGraphicsScene *scene, int life, enum WarPart part):
-    QGraphicsPixmapItem(QPixmap(QString::fromStdString(imageFile)))
+    Object(part, imageFile)
 {
     setPos(x, y);
     this->life = life;
-    this->part = part;
     scene->addItem(this);
     update();
 }
 
-void Plane::delScreen(QGraphicsScene *scene)
-{
-    scene->removeItem(this);
-    update();
-}
-
-void Plane::synScreen(QGraphicsScene *scene)
-{
-    if(!scene->items().contains(this))
-    {
-        scene->addItem(this);
-        update();
-    }
-}
-
 bool Plane::crash(QGraphicsScene *scene)
 {
-	if (life <= 0) //ÈôÒÑ¾­ºÄ¾¡ÉúÃüÖµ
+	if (life <= 0) //è‹¥å·²ç»è€—å°½ç”Ÿå‘½å€¼
 		return false;
-	else if (--life <= 0) //ÈôÉúÃüÖµ´Ë´ÎcrashºóºÄ¾¡
+	else if (--life <= 0) //è‹¥ç”Ÿå‘½å€¼æ­¤æ¬¡crashåŽè€—å°½
 	{
         delScreen(scene);
 		return false;
