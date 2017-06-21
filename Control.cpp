@@ -656,6 +656,12 @@ void Control::retryGame()
     }
     enemybullets.clear();
 
+    for(auto it:lifesupplys)
+    {
+        removeItem(it);
+        delete it;
+    }
+
     gameLostText->hide();
     retryGameButton->hide();
     helpGameButton->hide();
