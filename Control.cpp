@@ -415,7 +415,6 @@ bool Control::changeBulletPosition(Bullet * bullet, int newX, int newY)
 	/* 首先检查玩家飞机 */
     if (bullet->part==ENEMY && bullet->collidesWithItem(myplane))
 	{
-        //qDebug() << "myplane: " << myplane->life;
         bullet->hit(this);
         myplane->crash(this);
         updateBar(lifeBar, lifeFrameBar, LifeBarPos, -2, QBrush(Qt::green));
@@ -536,10 +535,9 @@ void Control::updateMyBullets()
 			delete *it;
             it = mybullets.erase(it);
         }
+    }
 }
 
-//标记：这里还需要添加玩家子弹自动发射的逻辑
-}
 void Control::shootBullet()
 {
     /* 玩家飞机发出新子弹，新子弹在玩家飞机炮管外的位置 */
@@ -661,6 +659,7 @@ void Control::retryGame()
         removeItem(it);
         delete it;
     }
+    lifesupplys.clear();
 
     gameLostText->hide();
     retryGameButton->hide();
@@ -700,8 +699,15 @@ void Control::startGame()
 
     scoreText->show();
     lifeFrameBar->show();
+    lifeBar->setRect(LifeBarPos.x(), LifeBarPos.y(), myLife*2, lifeBar->rect().height());
+    lifeBar->setBrush(Qt::green);
+    lifeBar->update();
     lifeBar->show();
+
     skillFrameBar->show();
+    skillBar->setRect(SkillBarPos.x(), SkillBarPos.y(), mySkill*2, skillBar->rect().height());
+    skillBar->setBrush(Qt::blue);
+    skillBar->update();
     skillBar->show();
 
     /* 设置各动作更新时钟 */
