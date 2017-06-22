@@ -742,6 +742,7 @@ void Control::showHelpMessage()
     helpText += tr("J：超级子弹技能，一次发射三个方向的子弹，消耗5点技能\n");
     helpText += tr("K：轰炸技能，一次性炸掉所有敌机，消耗3点技能\n");
     helpText += tr("L：子弹拦截技能，一次性拦截掉所有子弹，消耗7点技能\n");
+    helpText += tr("空格键：暂停游戏\n");
     helpText += tr("\n补给：\n");
     helpText += tr("被击毁的敌机随机生成补给，即绿色的加号，每次可补充10点生命值");
     QMessageBox::information(NULL,tr("游戏帮助"),helpText);
