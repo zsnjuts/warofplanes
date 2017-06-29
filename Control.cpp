@@ -7,6 +7,8 @@ const QPointF SkillBarPos = QPointF(650, 570);
 const int myBulletShootTimerItv = 300;
 const int enemyBulletShootTimerItv = 1000;
 const int allBulletMoveTimerItv = 10;
+
+const int myPlaneMoveTimerItv = 30;
 const int enemyPlaneMoveTimerItv = 50;
 const int enemyPlaneGenerateTimerItv = 3000;
 const int bossGenerateTimeItv = 5000;
@@ -173,6 +175,8 @@ Control::Control()
 
 void Control::timerEvent(QTimerEvent *event)
 {
+    if(event->timerId()==myPlaneMoveTimerId)
+        changePlanePosition(myplane, myplane->x()+myPlaneMove.x(), myplane->y()+myPlaneMove.y());
     if(event->timerId()==enemyBulletShootTimerId)
         shootEnemyBullets();
     else if(event->timerId()==myBulletShootTimerId)
@@ -197,29 +201,29 @@ void Control::timerEvent(QTimerEvent *event)
 
 void Control::keyPressEvent(QKeyEvent *event)
 {
-    if(event->key()==Qt::Key_W)
+    if(event->key()==Qt::Key_W && !event->isAutoRepeat())
     {
-        changePlanePosition(myplane, myplane->x(), myplane->y()-10);
-        myplane->moveBy(0, -10);
-        myplane->update();
+        if(myPlaneMove==QPointF(0,0))
+            myPlaneMoveTimerId = startTimer(myPlaneMoveTimerItv);
+        myPlaneMove = QPointF(0, -10);
     }
-    else if(event->key()==Qt::Key_S)
+    else if(event->key()==Qt::Key_S && !event->isAutoRepeat())
     {
-        changePlanePosition(myplane, myplane->x(), myplane->y()+10);
-        myplane->moveBy(0, 10);
-        myplane->update();
+        if(myPlaneMove==QPointF(0,0))
+            myPlaneMoveTimerId = startTimer(myPlaneMoveTimerItv);
+        myPlaneMove = QPointF(0, 10);
     }
-    else if(event->key()==Qt::Key_A)
+    else if(event->key()==Qt::Key_A && !event->isAutoRepeat())
     {
-        changePlanePosition(myplane, myplane->x()-10, myplane->y());
-        myplane->moveBy(-10, 0);
-        myplane->update();
+        if(myPlaneMove==QPointF(0,0))
+            myPlaneMoveTimerId = startTimer(myPlaneMoveTimerItv);
+        myPlaneMove = QPointF(-10, 0);
     }
-    else if(event->key()==Qt::Key_D)
+    else if(event->key()==Qt::Key_D && !event->isAutoRepeat())
     {
-        changePlanePosition(myplane, myplane->x()+10, myplane->y());
-        myplane->moveBy(10, 0);
-        myplane->update();
+        if(myPlaneMove==QPointF(0,0))
+            myPlaneMoveTimerId = startTimer(myPlaneMoveTimerItv);
+        myPlaneMove = QPointF(10, 0);
     }
     else if(event->key()==Qt::Key_J && myplane->skill>=5)
     {
@@ -261,14 +265,44 @@ void Control::keyPressEvent(QKeyEvent *event)
         pauseGame();
 }
 
+void Control::keyReleaseEvent(QKeyEvent *event)
+{
+    if((event->key()==Qt::Key_W || event->key()==Qt::Key_S || event->key()==Qt::Key_A || event->key()==Qt::Key_D)
+            && !event->isAutoRepeat())
+    {
+        myPlaneMove = QPointF(0, 0);
+        killTimer(myPlaneMoveTimerId);
+    }
+}
+
 bool Control::generateEnemyPlane()
 {
 	/* 随机在第一行生成敌机 */
-    srand(time(NULL));//初始化时间种子，之前这个放在循环内会导致卡死
-    int x = rand() % (int)width(); //敌机最左端位置
+    srand(time(NULL));//初始化时间种子
     QPixmap pixmap(QPixmap(QString::fromStdString(enemyPlaneImageFile)));
-    while(!items(x, 0, pixmap.width(), pixmap.height(), Qt::IntersectsItemBoundingRect, Qt::DescendingOrder).empty()) //设置相交模式
-        x = rand() % (int)width();
+    int cnt = 0;
+    int x = rand() % (int)width(); //敌机最左端位置
+    for(cnt=0;cnt<100;cnt++)
+    {
+        bool flag = true; //此位置是否合法
+        for(auto iter:enemyplanes)
+        {
+            if(iter->sceneBoundingRect().intersects(QRectF(x, 0, pixmap.width(), pixmap.height())))
+            {
+                flag = false;
+                break;
+            }
+        }
+
+        if(flag)
+            break;
+        else
+            x = rand() % (int)width();
+    }
+
+    /* 若生成100次随机都未能找到合适的位置则退出 */
+    if(cnt>=100)
+        return false;
 
     /* 新增敌机 */
     EnemyPlane *enemy = new EnemyPlane(x, 0, enemyPlaneImageFile, this, ORD, enemyLife);
@@ -279,11 +313,31 @@ bool Control::generateEnemyPlane()
 bool Control::generateBoss()
 {
     /* 随机在第一行生成敌机 */
-    srand(time(NULL));//初始化时间种子，之前这个放在循环内会导致卡死
-    int x = rand() % (int)width(); //敌机最左端位置
+    srand(time(NULL));//初始化时间种子
     QPixmap pixmap(QPixmap(QString::fromStdString(bossImageFile)));
-    while(!items(x, 0, pixmap.width(), pixmap.height(), Qt::IntersectsItemBoundingRect, Qt::DescendingOrder).empty()) //设置相交模式
-        x = rand() % (int)width();
+    int cnt = 0;
+    int x = rand() % (int)width(); //敌机最左端位置
+    for(cnt=0;cnt<100;cnt++)
+    {
+        bool flag = true; //此位置是否合法
+        for(auto iter:enemyplanes)
+        {
+            if(iter->sceneBoundingRect().intersects(QRectF(x, 0, pixmap.width(), pixmap.height())))
+            {
+                flag = false;
+                break;
+            }
+        }
+
+        if(flag)
+            break;
+        else
+            x = rand() % (int)width();
+    }
+
+    /* 若生成100次随机都未能找到合适的位置则退出 */
+    if(cnt>=100)
+        return false;
 
     /* 新增敌机 */
     EnemyPlane *enemy = new EnemyPlane(x, 0, bossImageFile, this, BOSS, bossLife);
@@ -711,6 +765,7 @@ void Control::startGame()
     skillBar->show();
 
     /* 设置各动作更新时钟 */
+    myPlaneMove = QPointF(0, 0);
     myBulletShootTimerId = startTimer(myBulletShootTimerItv);
     enemyBulletShootTimerId = startTimer(enemyBulletShootTimerItv);
     allBulletMoveTimerId = startTimer(allBulletMoveTimerItv);

@@ -28,6 +28,7 @@ public:
 protected:
     void timerEvent(QTimerEvent *event);
     void keyPressEvent(QKeyEvent *event);
+    void keyReleaseEvent(QKeyEvent *event);
 
 private:
     string myPlaneImageFile;
@@ -52,6 +53,9 @@ private:
     int myBulletShootTimerId;
     int enemyBulletShootTimerId;
     int allBulletMoveTimerId;
+
+    QPointF myPlaneMove;
+    int myPlaneMoveTimerId;
     int enemyPlaneMoveTimerId;
     int enemyPlaneGenerateTimerId;
     int bossGenerateTimeId;
